@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
+
 <style>
+
 body {
   text-align:center;
   font-family:sans-serif;
@@ -19,78 +23,189 @@ body {
 #result {
   font-size:22px;
   margin-top:20px;
+  font-weight:bold;
 }
+
 </style>
 
 </head>
 
+
 <body>
+
 
 <h2>勤怠QR打刻</h2>
 
+
 <div id="reader"></div>
+
 
 <div id="result">
 QRコードをかざしてください
 </div>
 
 
+
 <script>
+
 
 const GAS_URL =
 "https://script.google.com/macros/s/AKfycbzfEjEtICMCIMZa_BNMuzL8-EB1S42irYdmLaTX2K1u1Zi5WnEqurLcRfLLWlsF1zCVhQ/exec";
 
 
+
+let scanning = true;
+
+
+
+let scanner;
+
+
+
 function onScanSuccess(decodedText){
 
-document.getElementById("result").innerHTML =
-"打刻確認中...";
+
+  // 連続読み取り防止
+  if(!scanning){
+
+    return;
+
+  }
 
 
-fetch(GAS_URL,{
-method:"POST",
-body:new URLSearchParams({
-employeeId:decodedText
-})
-})
-.then(res=>res.text())
-.then(data=>{
+  // 即ロック
+
+  scanning = false;
 
 
-if(data==="DUPLICATE"){
 
-document.getElementById("result").innerHTML =
-"⚠️ 5分以内の再打刻です";
+  document.getElementById("result").innerHTML =
+  "⏳ 打刻処理中...";
 
-}else{
 
-document.getElementById("result").innerHTML =
-"✅ 打刻完了<br>社員番号："+decodedText;
+
+  // カメラ停止
+
+  scanner.clear();
+
+
+
+  fetch(
+    GAS_URL,
+    {
+
+      method:"POST",
+
+      body:new URLSearchParams({
+
+        employeeId:decodedText
+
+      })
+
+    }
+
+  )
+
+
+  .then(response => response.text())
+
+
+  .then(data => {
+
+
+
+    if(data === "DUPLICATE"){
+
+
+      document.getElementById("result").innerHTML =
+
+      "⚠️ すでに打刻済みです";
+
+
+    }else{
+
+
+      document.getElementById("result").innerHTML =
+
+      "✅ 打刻完了<br><br>" +
+
+      "社員番号：" + decodedText;
+
+
+    }
+
+
+
+    // 10秒後に再読み取り可能
+
+    setTimeout(function(){
+
+
+      location.reload();
+
+
+    },10000);
+
+
+
+  })
+
+
+  .catch(error => {
+
+
+    document.getElementById("result").innerHTML =
+
+    "❌ 通信エラー";
+
+
+    console.error(error);
+
+
+    // エラー時も10秒後復帰
+
+    setTimeout(function(){
+
+      location.reload();
+
+    },10000);
+
+
+  });
+
+
 
 }
 
 
-});
 
+scanner =
 
-}
-
-
-const scanner =
 new Html5QrcodeScanner(
+
 "reader",
+
 {
+
 fps:10,
+
 qrbox:250
+
 },
+
 false
+
 );
+
 
 
 scanner.render(onScanSuccess);
 
 
+
 </script>
 
+
 </body>
+
 </html>
