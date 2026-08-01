@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+
+body {
+  text-align:center;
+  font-family:sans-serif;
+}
+
+#reader {
+  width:300px;
+  margin:auto;
+}
+
+#result {
+  font-size:24px;
+  margin-top:20px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>勤怠QRテスト</h2>
+
+<div id="reader"></div>
+
+<div id="result">
+QRコードをかざしてください
+</div>
+
+
+<script>
+
+function onScanSuccess(decodedText){
+
+document.getElementById("result").innerHTML =
+"読み取り結果：" + decodedText;
+
+}
+
+
+const scanner =
+new Html5QrcodeScanner(
+"reader",
+{
+fps:10,
+qrbox:250
+},
+false
+);
+
+
+scanner.render(onScanSuccess);
+
+
+</script>
+
+</body>
+</html>
