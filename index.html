@@ -125,11 +125,13 @@ function onScanSuccess(decodedText){
     }else{
 
 
-      document.getElementById("result").innerHTML =
+     document.getElementById("result").innerHTML =
 
-      "✅ 打刻完了<br><br>" +
+"✅ 打刻完了<br><br>" +
 
-      "社員番号：" + decodedText;
+"社員番号：" + decodedText +
+"<br><br>" +
+"10秒後に自動的に戻ります";
 
 
     }
