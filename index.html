@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,7 +20,7 @@ body {
 }
 
 #result {
-  font-size:24px;
+  font-size:22px;
   margin-top:20px;
 }
 
@@ -27,42 +28,135 @@ body {
 
 </head>
 
+
 <body>
 
-<h2>勤怠QRテスト</h2>
+
+<h2>勤怠QR打刻</h2>
+
 
 <div id="reader"></div>
+
 
 <div id="result">
 QRコードをかざしてください
 </div>
 
 
+
 <script>
+
+
+// ★ここをあなたのApps Script URLにする
+
+const GAS_URL =
+"https://script.google.com/macros/s/AKfycbzfEjEtICMCIMZa_BNMuzL8-EB1S42irYdmLaTX2K1u1Zi5WnEqurLcRfLLWlsF1zCVhQ/exec";
+
+
+
+let lastCode = "";
+
+
 
 function onScanSuccess(decodedText){
 
-document.getElementById("result").innerHTML =
-"読み取り結果：" + decodedText;
+
+  // 同じQR連続読み取り防止
+
+  if(decodedText === lastCode){
+
+    return;
+
+  }
+
+
+  lastCode = decodedText;
+
+
+
+  document.getElementById("result").innerHTML =
+  "登録中：" + decodedText;
+
+
+
+  fetch(
+    GAS_URL,
+    {
+
+      method:"POST",
+
+      body:
+      new URLSearchParams({
+
+        employeeId:decodedText
+
+      })
+
+    }
+
+  )
+
+
+  .then(response => response.text())
+
+
+  .then(data => {
+
+
+    document.getElementById("result").innerHTML =
+
+    "✅ 登録完了：" + decodedText;
+
+
+  })
+
+
+  .catch(error => {
+
+
+    document.getElementById("result").innerHTML =
+
+    "❌ エラー";
+
+
+    console.error(error);
+
+
+  });
+
+
 
 }
 
 
+
 const scanner =
+
 new Html5QrcodeScanner(
+
 "reader",
+
 {
+
 fps:10,
+
 qrbox:250
+
 },
+
 false
+
 );
+
 
 
 scanner.render(onScanSuccess);
 
 
+
 </script>
 
+
 </body>
+
 </html>
