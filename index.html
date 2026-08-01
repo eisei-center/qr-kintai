@@ -1,189 +1,170 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="ja">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>勤怠QR打刻</title>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
-
 <style>
 
-body {
-  text-align:center;
-  font-family:sans-serif;
+body{
+    font-family:sans-serif;
+    text-align:center;
+    background:#f5f5f5;
+    margin:20px;
 }
 
-#reader {
-  width:300px;
-  margin:auto;
+h2{
+    margin-bottom:20px;
 }
 
-#result {
-  font-size:22px;
-  margin-top:20px;
-  font-weight:bold;
+#reader{
+    width:320px;
+    margin:auto;
+}
+
+#result{
+    margin-top:20px;
+    font-size:22px;
+    font-weight:bold;
+}
+
+#countdown{
+    margin-top:15px;
+    font-size:18px;
+    color:#666;
 }
 
 </style>
 
 </head>
 
-
 <body>
-
 
 <h2>勤怠QR打刻</h2>
 
-
 <div id="reader"></div>
-
 
 <div id="result">
 QRコードをかざしてください
 </div>
 
-
+<div id="countdown"></div>
 
 <script>
-
 
 const GAS_URL =
 "https://script.google.com/macros/s/AKfycbzfEjEtICMCIMZa_BNMuzL8-EB1S42irYdmLaTX2K1u1Zi5WnEqurLcRfLLWlsF1zCVhQ/exec";
 
-
-
 let scanning = true;
-
-
 
 let scanner;
 
 
 
-function onScanSuccess(decodedText){
+function startCountdown(){
 
+    let sec = 5;
 
-  // 連続読み取り防止
-  if(!scanning){
+    document.getElementById("countdown").innerHTML =
+    sec + "秒後に自動的に元の画面へ戻ります";
 
-    return;
+    const timer = setInterval(function(){
 
-  }
+        sec--;
 
+        if(sec>0){
 
-  // 即ロック
+            document.getElementById("countdown").innerHTML =
+            sec + "秒後に自動的に元の画面へ戻ります";
 
-  scanning = false;
+        }else{
 
+            clearInterval(timer);
 
+            location.reload();
 
-  document.getElementById("result").innerHTML =
-  "⏳ 打刻処理中...";
+        }
 
-
-
-  // カメラ停止
-
-  scanner.clear();
-
-
-
-  fetch(
-    GAS_URL,
-    {
-
-      method:"POST",
-
-      body:new URLSearchParams({
-
-        employeeId:decodedText
-
-      })
-
-    }
-
-  )
-
-
-  .then(response => response.text())
-
-
-  .then(data => {
-
-
-
-    if(data === "DUPLICATE"){
-
-
-      document.getElementById("result").innerHTML =
-
-      "⚠️ すでに打刻済みです";
-
-
-    }else{
-
-
-     document.getElementById("result").innerHTML =
-
-"✅ 打刻完了<br><br>" +
-
-"社員番号：" + decodedText +
-"<br><br>" +
-"10秒後に自動的に戻ります";
-
-
-    }
-
-
-
-    // 10秒後に再読み取り可能
-
-    setTimeout(function(){
-
-
-      location.reload();
-
-
-    },10000);
-
-
-
-  })
-
-
-  .catch(error => {
-
-
-    document.getElementById("result").innerHTML =
-
-    "❌ 通信エラー";
-
-
-    console.error(error);
-
-
-    // エラー時も10秒後復帰
-
-    setTimeout(function(){
-
-      location.reload();
-
-    },10000);
-
-
-  });
-
-
+    },1000);
 
 }
 
 
 
-scanner =
+function onScanSuccess(decodedText){
 
-new Html5QrcodeScanner(
+    if(!scanning){
+
+        return;
+
+    }
+
+    scanning = false;
+
+    scanner.clear();
+
+    document.getElementById("result").innerHTML =
+    "⏳ 打刻処理中...";
+
+
+
+    fetch(GAS_URL,{
+
+        method:"POST",
+
+        body:new URLSearchParams({
+
+            employeeId:decodedText
+
+        })
+
+    })
+
+    .then(response=>response.text())
+
+    .then(text=>{
+
+        const data = JSON.parse(text);
+
+        if(data.result==="DUPLICATE"){
+
+            document.getElementById("result").innerHTML =
+            "⚠️ 5分以内の再打刻です";
+
+        }else{
+
+            document.getElementById("result").innerHTML =
+            "✅ 打刻完了<br><br>" +
+            "社員名：" + data.employeeName + "<br>" +
+            "社員番号：" + data.employeeId + "<br>" +
+            "区分：" + data.status;
+
+        }
+
+        startCountdown();
+
+    })
+
+    .catch(error=>{
+
+        console.error(error);
+
+        document.getElementById("result").innerHTML =
+        "❌ 通信エラー";
+
+        startCountdown();
+
+    });
+
+}
+
+
+
+scanner = new Html5QrcodeScanner(
 
 "reader",
 
@@ -199,15 +180,9 @@ false
 
 );
 
-
-
 scanner.render(onScanSuccess);
-
-
 
 </script>
 
-
 </body>
-
 </html>
