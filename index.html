@@ -8,7 +8,230 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
+<!DOCTYPE html>
+<html>
 
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+
+<style>
+
+body {
+
+text-align:center;
+
+font-family:sans-serif;
+
+}
+
+
+#reader {
+
+width:300px;
+
+margin:auto;
+
+}
+
+
+#result {
+
+font-size:22px;
+
+margin-top:25px;
+
+font-weight:bold;
+
+}
+
+
+</style>
+
+
+</head>
+
+
+<body>
+
+
+<h2>勤怠QR打刻</h2>
+
+
+<div id="reader"></div>
+
+
+<div id="result">
+
+QRコードをかざしてください
+
+</div>
+
+
+
+<script>
+
+
+const GAS_URL =
+
+"https://script.google.com/macros/s/AKfycbzfEjEtICMCIMZa_BNMuzL8-EB1S42irYdmLaTX2K1u1Zi5WnEqurLcRfLLWlsF1zCVhQ/exec";
+
+
+
+let lastCode = "";
+
+
+
+function onScanSuccess(decodedText){
+
+
+
+if(decodedText === lastCode){
+
+return;
+
+}
+
+
+
+lastCode = decodedText;
+
+
+
+document.getElementById("result").innerHTML =
+
+"⏳ 打刻中...";
+
+
+
+fetch(
+
+GAS_URL,
+
+{
+
+method:"POST",
+
+body:
+
+new URLSearchParams({
+
+employeeId:decodedText
+
+})
+
+}
+
+)
+
+
+
+.then(response => response.text())
+
+
+
+.then(data => {
+
+
+
+if(data === "OK"){
+
+
+document.getElementById("result").innerHTML =
+
+"✅ 打刻完了<br><br>" +
+
+"社員番号：" +
+
+decodedText;
+
+
+
+}
+
+
+else if(data === "DUPLICATE"){
+
+
+document.getElementById("result").innerHTML =
+
+"⚠️ 打刻済みです<br><br>" +
+
+"5分以内の再打刻はできません";
+
+
+}
+
+
+
+else{
+
+
+document.getElementById("result").innerHTML =
+
+"❌ エラー";
+
+
+}
+
+
+
+})
+
+
+
+.catch(error => {
+
+
+document.getElementById("result").innerHTML =
+
+"❌ 通信エラー";
+
+
+console.error(error);
+
+
+});
+
+
+
+}
+
+
+
+const scanner =
+
+new Html5QrcodeScanner(
+
+"reader",
+
+{
+
+fps:10,
+
+qrbox:250
+
+},
+
+false
+
+);
+
+
+
+scanner.render(onScanSuccess);
+
+
+
+</script>
+
+
+</body>
+
+</html>
 body {
   text-align:center;
   font-family:sans-serif;
